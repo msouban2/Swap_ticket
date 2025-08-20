@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Chat Test</title></head>
+  <body>
+    <h3>SocketIO Chat Test</h3>
+    <div>
+      <input id="room" placeholder="roomId (e.g., ticket_123)" />
+      <input id="name" placeholder="Your name" />
+      <select id="role">
+        <option>buyer</option>
+        <option>seller</option>
+        <option>judge</option>
+      </select>
+      <button id="joinBtn">Join</button>
+    </div>
+    <pre id="log" style="height:200px;overflow:auto;border:1px solid #ccc"></pre>
+    <div>
+      <input id="msg" placeholder="message..." />
+      <button id="sendBtn">Send</button>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+      const socket = io("http://localhost:5000");
+      const log = (m) => {
+        const el = document.getElementById('log');
+        el.textContent += m + "\n";
+        el.scrollTop = el.scrollHeight;
+      };
+
+      document.getElementById('joinBtn').onclick = () => {
+        const room = document.getElementById('room').value.trim();
+        const name = document.getElementById('name').value.trim() || "anon";
+        const role = document.getElementById('role').value;
+        socket.emit('join', { roomId: room, userId: name, name, role });
+      };
+
+      document.getElementById('sendBtn').onclick = () => {
+        const room = document.getElementById('room').value.trim();
+        const text = document.getElementById('msg').value.trim();
+        const name = document.getElementById('name').value.trim() || "anon";
+        const role = document.getElementById('role').value;
+        socket.emit('send_message', { roomId: room, userId: name, role, text });
+        document.getElementById('msg').value = "";
+      };
+
+      socket.on('system', (d) => log(`[system] ${d.msg}`));
+      socket.on('message', (d) => log(`[${d.role||'user'}:${d.user_id||''}] ${d.text}`));
+      socket.on('error', (e) => log(`[error] ${e.message}`));
+    </script>
+  </body>
+</html>
